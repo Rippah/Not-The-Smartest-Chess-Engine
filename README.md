@@ -18,4 +18,5 @@ chess_engine_minimax_alphabeta_iterative_evaluation.py - dodate evaluacije za bo
 
 
 POKREĆE SE JEDAN OD TA TRI FAJLA, SVA TRI IMAJU RAZLIČIT NIVO IGRE (INTELIGENCIJU)
+
 AKO SE KORISTI VISUAL STUDIO CODE, TREBA CEO FOLDER DA SE OTVORI, A NE SAMO FAJL
