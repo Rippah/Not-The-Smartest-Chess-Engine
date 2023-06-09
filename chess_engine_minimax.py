@@ -4,7 +4,7 @@ import random
 import chess.polyglot
 import chess_display
 
-reader = chess.polyglot.open_reader('gm2600.bin')
+reader = chess.polyglot.open_reader('baron30.bin')
 
 def random_movement(BOARD):
     return random.choice(list(BOARD.legal_moves))
