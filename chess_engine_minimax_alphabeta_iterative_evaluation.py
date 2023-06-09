@@ -1,4 +1,5 @@
 import chess
+from stockfish import Stockfish
 from copy import deepcopy
 import random
 import chess.polyglot
@@ -173,7 +174,7 @@ center_squares = {chess.E4, chess.E5, chess.D4, chess.D5}
 center_value = 75
 
 center_box = {chess.C3, chess.C4, chess.C5, chess.C6, chess.D3, chess.D6, chess.E3, chess.E6, chess.F3, chess.F4, chess.F5, chess.F6}
-center_box_value = 10
+center_box_value = 25
 
 def evaluate_board(BOARD):
     points = 0
@@ -305,17 +306,14 @@ def evaluate_position(BOARD):
     return total_evaluation
 
 
-def min_max_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
+def minimax_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
     opening_move = reader.get(BOARD)
 
     if opening_move is not None:
-        return opening_move.move, alpha, beta
-    if N == 0:
-        return random_movement(BOARD), alpha, beta
-
+        return opening_move.move, alpha, beta, 0
+    
     best_move = None
     min_value = float('inf')
-    max_value = float('-inf')
 
     for move in BOARD.legal_moves:
         temp = deepcopy(BOARD)
@@ -328,38 +326,44 @@ def min_max_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
         evaluate_score += evaluate_piece_mobility(temp)
         evaluate_score += evaluate_position(temp)
 
-        if BOARD.turn:
-            if evaluate_score >= beta:
-                return best_move, alpha, beta
+    
 
-            alpha = max(alpha, evaluate_score)
-            
-            if evaluate_score > max_value:
-                max_value = evaluate_score
-                best_move = move
-        else:
+        if not BOARD.turn:
             if evaluate_score <= alpha:
-                return best_move, alpha, beta
-
+                return best_move, evaluate_score, beta, evaluate_score
+            
             beta = min(beta, evaluate_score)
 
             if evaluate_score < min_value:
                 min_value = evaluate_score
                 best_move = move
-
-
-    return best_move, alpha, beta
-
-def min_max_algorithm(BOARD):
+    
+    if N > 1:
+        _, _, _, evaluate_score = minimax_movement_depth_N_alphabeta_iterative(temp, N - 1, alpha, beta)
+        return best_move, alpha, beta, evaluate_score
+    else:
+        return best_move, alpha, beta, evaluate_score
+        
+def minimax_algorithm(BOARD):
+    max_depth = 10
     best_move = None
     alpha = float('-inf')
     beta = float('inf')
+    score = 0
 
-    for depth in range(1, 20):
-        current_move, alpha, beta = min_max_movement_depth_N_alphabeta_iterative(BOARD, depth, alpha, beta)
-        if current_move is not None:
+    stockfish = Stockfish(path='Stockfish/stockfish.exe')
+    stockfish.set_fen_position(BOARD.fen())
+    print("Stockfish move: {}".format(stockfish.get_best_move()))
+
+    for depth in range(1, max_depth + 1):
+        current_move, alpha, beta, evaluated_score = minimax_movement_depth_N_alphabeta_iterative(BOARD, depth, alpha, beta)
+        if best_move is None or evaluated_score < score:
             best_move = current_move
+            score = evaluated_score
 
+    print("Minimax move: {} \tWith the evaluation score of: {}".format(best_move, evaluated_score))
     return best_move
 
-chess_display.chess_engine(chess_display.chess_board, min_max_algorithm, chess.BLACK)
+
+chess_display.chess_engine(chess_display.chess_board, minimax_algorithm, chess.BLACK)
+

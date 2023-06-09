@@ -4,7 +4,7 @@ import random
 import chess.polyglot
 import chess_display
 
-reader = chess.polyglot.open_reader('baron30.bin')
+reader = chess.polyglot.open_reader('gm2600.bin')
 
 def random_movement(BOARD):
     return random.choice(list(BOARD.legal_moves))
@@ -41,7 +41,7 @@ def evaluate_space(BOARD):
     else:
         return -value
 
-def min_max_movement_depth_N(BOARD, N):
+def minimax_movement_depth_N(BOARD, N):
     opening_move = reader.get(BOARD)
     if opening_move is not None:
         return opening_move.move
@@ -56,7 +56,7 @@ def min_max_movement_depth_N(BOARD, N):
 
         if outcome is None:
             if N > 1:
-                temp_best_move = min_max_movement_depth_N(temp, N-1)
+                temp_best_move = minimax_movement_depth_N(temp, N-1)
                 temp.push(temp_best_move)
         
             points.append(evaluate_board(temp))
@@ -81,8 +81,8 @@ def min_max_movement_depth_N(BOARD, N):
     return best_move
 
 
-def min_max_algorithm(BOARD):
-    return min_max_movement_depth_N(BOARD, 3)
+def minimax_algorithm(BOARD):
+    return minimax_movement_depth_N(BOARD, 3)
 
-chess_display.chess_engine(chess_display.chess_board, min_max_algorithm, chess.BLACK)
+chess_display.chess_engine(chess_display.chess_board, minimax_algorithm, chess.BLACK)
 

@@ -203,110 +203,8 @@ def evaluate_space(BOARD):
     else:
         return -value
 
-    
-def evaluate_center_control(BOARD):
-    center_control = 0
-    for square in center_squares:
-        piece = BOARD.piece_at(square)
-        if piece is not None:
-            if piece.color == BOARD.turn:
-                center_control += center_value
-            else:
-                center_control -= center_value
-    
-    for square in center_box:
-        piece = BOARD.piece_at(square)
-        if piece is not None:
-            if piece.color == BOARD.turn:
-                center_control += center_box_value
-            else:
-                center_control -= center_box_value
 
-    return center_control
-
-
-def evaluate_piece_safety(BOARD, piece, position):
-    threats = BOARD.attackers(not BOARD.turn, position)
-    threat_value = 0
-
-    if threats:
-        escape_moves = [move for move in BOARD.legal_moves if move.to_square not in threats]
-        if escape_moves:
-            return 0
-
-        threat_value -= point_values[str(piece)]
-
-        for move in BOARD.legal_moves:
-            if move.from_square == position and move.to_square in threats:
-                attacked_piece = BOARD.piece_at(move.to_square)
-                if attacked_piece is not None:
-                    threat_value -= 2 * point_values[str(attacked_piece)]
-                    if point_values[str(attacked_piece)] >= point_values[str(piece)]:
-                        threat_value -= 5 * point_values[str(attacked_piece)]
-                    return threat_value
-
-    return 0
-
-
-def evaluate_piece_mobility(BOARD):
-    mobility_points = 0
-    for square in BOARD.piece_map():
-        if BOARD.piece_at(square).color == BOARD.turn:
-            mobility_points += len(list(BOARD.generate_legal_moves(square)))
-    return mobility_points
-
-
-def evaluate_position(BOARD):
-    total_evaluation = 0
-
-    for row in range(8):
-        for col in range(8):
-            piece = BOARD.piece_at(row*8 + col)
-
-            if piece != '.':
-                piece_value = 0
-                if piece is not None:
-                    piece_value = point_values[str(piece)]
-                
-                if piece == 'p':
-                    position_value = pawn_table_white[row * 8 + col]
-                elif piece == 'n':
-                    position_value = knight_table_white[row * 8 + col]
-                elif piece == 'b':
-                    position_value = bishop_table_white[row * 8 + col]
-                elif piece == 'r':
-                    position_value = rook_table_white[row * 8 + col]
-                elif piece == 'q':
-                    position_value = queen_table_white[row * 8 + col]
-                elif piece == 'k':
-                    if 'Q' not in ''.join(BOARD): 
-                        position_value = king_table_end_game[row * 8 + col]
-                    else:
-                        position_value = king_table_white[row * 8 + col]
-                elif piece == 'P':
-                    position_value = pawn_table_black[row * 8 + col]
-                elif piece == 'N':
-                    position_value = knight_table_black[row * 8 + col]
-                elif piece == 'B':
-                    position_value = bishop_table_black[row * 8 + col]
-                elif piece == 'R':
-                    position_value = rook_table_black[row * 8 + col]
-                elif piece == 'Q':
-                    position_value = queen_table_black[row * 8 + col]
-                elif piece == 'K':
-                    if 'q' not in ''.join(BOARD): 
-                        position_value = king_table_end_game[row * 8 + col]
-                    else:
-                        position_value = king_table_black[row * 8 + col]
-                else:
-                    position_value = 0
-
-                total_evaluation += piece_value * position_value * 0.01
-
-    return total_evaluation
-
-
-def min_max_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
+def minimax_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
     opening_move = reader.get(BOARD)
 
     if opening_move is not None:
@@ -320,13 +218,7 @@ def min_max_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
         temp.push(move)
 
         evaluate_score = evaluate_board(temp)
-        evaluate_score += evaluate_space(temp)
-        evaluate_score += evaluate_center_control(temp)
-        evaluate_score += evaluate_piece_safety(temp, BOARD.piece_at(move.from_square), move.from_square)
-        evaluate_score += evaluate_piece_mobility(temp)
-        evaluate_score += evaluate_position(temp)
-
-    
+        evaluate_score += evaluate_space(temp)    
 
         if not BOARD.turn:
             if evaluate_score <= alpha:
@@ -339,12 +231,12 @@ def min_max_movement_depth_N_alphabeta_iterative(BOARD, N, alpha, beta):
                 best_move = move
     
     if N > 1:
-        _, _, _, evaluate_score = min_max_movement_depth_N_alphabeta_iterative(temp, N - 1, alpha, beta)
+        _, _, _, evaluate_score = minimax_movement_depth_N_alphabeta_iterative(temp, N - 1, alpha, beta)
         return best_move, alpha, beta, evaluate_score
     else:
         return best_move, alpha, beta, evaluate_score
         
-def min_max_algorithm(BOARD):
+def minimax_algorithm(BOARD):
     max_depth = 10
     best_move = None
     alpha = float('-inf')
@@ -356,7 +248,7 @@ def min_max_algorithm(BOARD):
     print("Stockfish move: {}".format(stockfish.get_best_move()))
 
     for depth in range(1, max_depth + 1):
-        current_move, alpha, beta, evaluated_score = min_max_movement_depth_N_alphabeta_iterative(BOARD, depth, alpha, beta)
+        current_move, alpha, beta, evaluated_score = minimax_movement_depth_N_alphabeta_iterative(BOARD, depth, alpha, beta)
         if best_move is None or evaluated_score < score:
             best_move = current_move
             score = evaluated_score
@@ -365,5 +257,5 @@ def min_max_algorithm(BOARD):
     return best_move
 
 
-chess_display.chess_engine(chess_display.chess_board, min_max_algorithm, chess.BLACK)
+chess_display.chess_engine(chess_display.chess_board, minimax_algorithm, chess.BLACK)
 
